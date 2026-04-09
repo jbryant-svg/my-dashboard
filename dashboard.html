@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="My Dashboard">
+<title>My Dashboard</title>
+<style>
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f3;
+    --bg-tertiary: #eeede8;
+    --bg-info: #e6f1fb;
+    --bg-success: #eaf3de;
+    --bg-warning: #faeeda;
+    --bg-danger: #fcebeb;
+    --text-primary: #1a1a18;
+    --text-secondary: #5a5a56;
+    --text-tertiary: #8a8a85;
+    --text-info: #185fa5;
+    --text-success: #3b6d11;
+    --text-warning: #854f0b;
+    --text-danger: #a32d2d;
+    --border: rgba(0,0,0,0.12);
+    --border-med: rgba(0,0,0,0.22);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1e1e1c;
+      --bg-secondary: #282825;
+      --bg-tertiary: #323230;
+      --bg-info: #0c2a45;
+      --bg-success: #142808;
+      --bg-warning: #2e1f04;
+      --bg-danger: #2d0f0f;
+      --text-primary: #f0efe8;
+      --text-secondary: #a8a89f;
+      --text-tertiary: #6a6a64;
+      --text-info: #85b7eb;
+      --text-success: #97c459;
+      --text-warning: #fac775;
+      --text-danger: #f09595;
+      --border: rgba(255,255,255,0.1);
+      --border-med: rgba(255,255,255,0.2);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg-tertiary);
+    min-height: 100vh;
+    padding: 16px;
+    color: var(--text-primary);
+  }
+  .dash-shell {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-xl);
+    border: 0.5px solid var(--border);
+    padding: 14px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .dash-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px 14px;
+  }
+  .dash-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .dash-right { display: flex; align-items: center; gap: 12px; }
+  .dash-date { font-size: 12px; color: var(--text-tertiary); }
+  .dash-signout {
+    font-size: 11px; color: var(--text-tertiary);
+    background: none; border: none; cursor: pointer; font-family: var(--font);
+  }
+  .dash-signout:hover { color: var(--text-secondary); }
+
+  .dash-grid-top { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; }
+  .dash-grid-mid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; margin-top: 10px; }
+  .dash-grid-bot { margin-top: 10px; }
+
+  @media (max-width: 600px) {
+    body { padding: 8px; }
+    .dash-grid-top, .dash-grid-mid { grid-template-columns: 1fr; }
+  }
+
+  .signin-overlay {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 16px; padding: 3rem 1rem; text-align: center;
+  }
+  .signin-title { font-size: 16px; font-weight: 500; color: var(--text-primary); }
+  .signin-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; max-width: 300px; }
+  .scopes-list { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 280px; }
+  .scope-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+  .scope-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .sd-blue { background: #378ADD; } .sd-amber { background: #EF9F27; }
+  .sd-green { background: #639922; } .sd-teal { background: #1D9E75; }
+  .google-btn {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg-primary); border: 0.5px solid var(--border-med);
+    border-radius: var(--radius-md); padding: 11px 22px; cursor: pointer;
+    font-size: 14px; font-weight: 500; color: var(--text-primary); font-family: var(--font);
+    transition: background 0.15s;
+  }
+  .google-btn:hover { background: var(--bg-secondary); }
+
+  .win {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-med);
+    border-radius: var(--radius-lg);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .win-titlebar {
+    display: flex; align-items: center; gap: 7px;
+    padding: 8px 12px; border-bottom: 0.5px solid var(--border);
+    background: var(--bg-secondary);
+  }
+  .win-dots { display: flex; gap: 5px; }
+  .win-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #E24B4A; } .dot-y { background: #EF9F27; } .dot-g { background: #639922; }
+  .win-label {
+    font-size: 11px; font-weight: 500; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.06em; flex: 1; text-align: center;
+  }
+  .win-badge { font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 500; }
+  .b-blue { background: #E6F1FB; color: #185FA5; }
+  .b-amber { background: #FAEEDA; color: #854F0B; }
+  .b-green { background: #EAF3DE; color: #3B6D11; }
+  .b-purple { background: #EEEDFE; color: #534AB7; }
+  .b-red { background: #FCEBEB; color: #A32D2D; }
+  .b-teal { background: #E1F5EE; color: #0F6E56; }
+
+  .win-body { padding: 10px 12px; flex: 1; }
+  .win-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 12px; border-top: 0.5px solid var(--border);
+    background: var(--bg-secondary);
+  }
+  .footer-btn {
+    font-size: 11px; color: var(--text-tertiary);
+    background: none; border: none; cursor: pointer; font-family: var(--font);
+  }
+  .footer-btn:hover { color: var(--text-secondary); }
+  .footer-ts { font-size: 10px; color: var(--text-tertiary); }
+
+  .loading-msg { font-size: 12px; color: var(--text-tertiary); text-align: center; padding: 18px 0; }
+  .error-msg {
+    font-size: 11px; color: var(--text-danger); background: var(--bg-danger);
+    border-radius: var(--radius-md); padding: 9px; line-height: 1.5;
+  }
+  .ai-blurb {
+    background: var(--bg-secondary); border-radius: var(--radius-md);
+    padding: 7px 9px; margin-top: 8px; font-size: 11px;
+    color: var(--text-secondary); line-height: 1.4;
+  }
+  .ai-lbl { font-size: 10px; font-weight: 500; margin-bottom: 3px; }
+  .ai-lbl-blue { color: #185FA5; } .ai-lbl-amber { color: #854F0B; } .ai-lbl-purple { color: #534AB7; }
+
+  /* EMAIL */
+  .email-item { padding: 7px 0; border-bottom: 0.5px solid var(--border); }
+  .email-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .e-row1 { display: flex; align-items: center; gap: 6px; }
+  .e-from { font-size: 12px; font-weight: 500; color: var(--text-primary); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .e-time { font-size: 10px; color: var(--text-tertiary); flex-shrink: 0; }
+  .e-subj { font-size: 11px; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .e-reason { font-size: 10px; color: var(--text-tertiary); margin-top: 1px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .pd-h { background: #E24B4A; } .pd-m { background: #EF9F27; } .pd-l { background: #639922; }
+
+  /* CALENDAR */
+  .cal-item { display: flex; gap: 8px; padding: 7px 0; border-bottom: 0.5px solid var(--border); align-items: flex-start; }
+  .cal-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .cal-tc { min-width: 68px; }
+  .cal-time { font-size: 10px; color: var(--text-tertiary); display: block; }
+  .cal-dur { font-size: 10px; color: var(--text-tertiary); opacity: 0.6; display: block; }
+  .cal-bar { width: 3px; border-radius: 2px; align-self: stretch; flex-shrink: 0; min-height: 28px; }
+  .cal-info { flex: 1; min-width: 0; }
+  .cal-ttl { font-size: 12px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cal-det { font-size: 10px; color: var(--text-tertiary); margin-top: 1px; }
+  .now-pill { font-size: 9px; padding: 1px 5px; border-radius: 999px; background: #FCEBEB; color: #A32D2D; margin-left: 5px; vertical-align: middle; }
+  .bar-blue{background:#378ADD;} .bar-green{background:#639922;} .bar-amber{background:#EF9F27;}
+  .bar-purple{background:#7F77DD;} .bar-coral{background:#D85A30;} .bar-teal{background:#1D9E75;}
+  .bar-pink{background:#D4537E;} .bar-gray{background:#888780;}
+
+  /* TASKS */
+  .task-item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 0.5px solid var(--border); }
+  .task-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .task-num { width: 19px; height: 19px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; flex-shrink: 0; margin-top: 1px; }
+  .tn-1{background:#FCEBEB;color:#A32D2D;} .tn-2{background:#FAEEDA;color:#854F0B;} .tn-3{background:#EAF3DE;color:#3B6D11;}
+  .task-text { font-size: 12px; color: var(--text-primary); line-height: 1.4; }
+  .task-due { font-size: 10px; color: var(--text-tertiary); margin-top: 1px; }
+  .task-check { width: 14px; height: 14px; cursor: pointer; flex-shrink: 0; margin-top: 2px; accent-color: #639922; }
+  .task-input-row { display: flex; gap: 6px; margin-top: 10px; }
+  .task-input {
+    flex: 1; font-size: 12px; padding: 6px 9px;
+    border: 0.5px solid var(--border-med); border-radius: var(--radius-md);
+    background: var(--bg-primary); color: var(--text-primary); font-family: var(--font);
+  }
+  .task-input:focus { outline: none; border-color: #639922; }
+  .task-add-btn {
+    font-size: 11px; background: #EAF3DE; border: 0.5px solid #C0DD97;
+    border-radius: var(--radius-md); padding: 6px 11px; color: #3B6D11;
+    cursor: pointer; font-family: var(--font);
+  }
+  .task-add-btn:hover { background: #C0DD97; }
+
+  /* COACH */
+  .meta-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 9px; }
+  .ms { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 7px 9px; }
+  .ms-lbl { font-size: 10px; color: var(--text-tertiary); }
+  .ms-val { font-size: 15px; font-weight: 500; color: var(--text-primary); margin-top: 2px; }
+  .coach-msgs { min-height: 80px; max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-bottom: 9px; }
+  .msg { padding: 8px 11px; border-radius: var(--radius-md); font-size: 12px; line-height: 1.45; max-width: 92%; }
+  .msg-ai { background: #EEEDFE; color: #3C3489; align-self: flex-start; }
+  .msg-user { background: var(--bg-secondary); color: var(--text-primary); align-self: flex-end; border: 0.5px solid var(--border); }
+  .msg-loading { color: var(--text-tertiary); font-style: italic; font-size: 11px; align-self: flex-start; padding: 3px 0; }
+  .coach-row { display: flex; gap: 6px; }
+  .coach-in {
+    flex: 1; font-size: 12px; padding: 7px 10px;
+    border: 0.5px solid var(--border-med); border-radius: var(--radius-md);
+    background: var(--bg-primary); color: var(--text-primary); font-family: var(--font);
+  }
+  .coach-in:focus { outline: none; border-color: #7F77DD; }
+  .coach-send {
+    background: #EEEDFE; border: 0.5px solid #AFA9EC;
+    border-radius: var(--radius-md); padding: 7px 13px;
+    font-size: 12px; color: #534AB7; cursor: pointer; font-family: var(--font);
+  }
+  .coach-send:hover { background: #CECBF6; }
+
+  /* WEATHER */
+  .wx-hero { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 0.5px solid var(--border); }
+  .wx-temp { font-size: 34px; font-weight: 500; color: var(--text-primary); line-height: 1; }
+  .wx-desc { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .wx-loc { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
+  .wx-icon { font-size: 34px; line-height: 1; }
+  .wx-meta { font-size: 10px; color: var(--text-tertiary); text-align: right; line-height: 1.6; margin-top: 4px; }
+  .wx-rain-alert {
+    background: var(--bg-info); border: 0.5px solid #B5D4F4;
+    border-radius: var(--radius-md); padding: 8px 11px; margin-bottom: 10px;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .wx-rain-text { font-size: 11px; color: var(--text-info); line-height: 1.5; }
+  .wx-forecast { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
+  .wx-day {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 3px; padding: 5px 2px; border-radius: var(--radius-md);
+    border: 0.5px solid transparent;
+  }
+  .wx-day.rain-day { background: var(--bg-info); border-color: #B5D4F4; }
+  .wx-day.heavy-rain { background: var(--bg-danger); border-color: #F7C1C1; }
+  .wx-day-name { font-size: 9px; color: var(--text-tertiary); font-weight: 500; }
+  .wx-day-icon { font-size: 14px; line-height: 1; }
+  .wx-day-hi { font-size: 10px; font-weight: 500; color: var(--text-primary); }
+  .wx-day-lo { font-size: 9px; color: var(--text-tertiary); }
+  .wx-day-rain { font-size: 9px; color: #185FA5; font-weight: 500; }
+  .wx-day-rain.heavy { color: #A32D2D; }
+  .wx-bar-wrap { width: 100%; height: 3px; background: var(--border); border-radius: 2px; margin-top: 1px; }
+  .wx-bar { height: 3px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="dash-shell">
+  <div class="dash-titlebar">
+    <span class="dash-title">My Dashboard</span>
+    <div class="dash-right">
+      <span class="dash-date" id="dash-date"></span>
+      <button class="dash-signout" id="signout-btn" style="display:none" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <div id="signin-screen">
+    <div class="signin-overlay">
+      <svg viewBox="0 0 24 24" style="width:48px;height:48px;">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      <div class="signin-title">Connect your Google account</div>
+      <div class="signin-desc">One sign-in loads all four widgets simultaneously.</div>
+      <div class="scopes-list">
+        <div class="scope-row"><div class="scope-dot sd-blue"></div>Gmail — urgent emails to respond to</div>
+        <div class="scope-row"><div class="scope-dot sd-amber"></div>Google Calendar — today's events</div>
+        <div class="scope-row"><div class="scope-dot sd-green"></div>Google Tasks — your real task list</div>
+        <div class="scope-row"><div class="scope-dot sd-teal"></div>Weather — 10-day forecast + rain alerts</div>
+      </div>
+      <button class="google-btn" onclick="signIn()">
+        <svg viewBox="0 0 24 24" style="width:17px;height:17px;flex-shrink:0;">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Sign in with Google
+      </button>
+    </div>
+  </div>
+
+  <div id="dashboard-screen" style="display:none;">
+    <div class="dash-grid-top">
+      <div class="win">
+        <div class="win-titlebar">
+          <div class="win-dots"><div class="win-dot dot-r"></div><div class="win-dot dot-y"></div><div class="win-dot dot-g"></div></div>
+          <span class="win-label">Inbox</span>
+          <span class="win-badge b-blue" id="email-badge">loading</span>
+        </div>
+        <div class="win-body" id="email-body"><div class="loading-msg">Loading emails...</div></div>
+        <div class="win-footer"><button class="footer-btn" onclick="loadEmails()">Refresh</button><span class="footer-ts" id="email-ts"></span></div>
+      </div>
+      <div class="win">
+        <div class="win-titlebar">
+          <div class="win-dots"><div class="win-dot dot-r"></div><div class="win-dot dot-y"></div><div class="win-dot dot-g"></div></div>
+          <span class="win-label">Calendar</span>
+          <span class="win-badge b-amber" id="cal-badge">loading</span>
+        </div>
+        <div class="win-body" id="cal-body"><div class="loading-msg">Loading calendar...</div></div>
+        <div class="win-footer"><button class="footer-btn" onclick="loadCalendar()">Refresh</button><span class="footer-ts" id="cal-ts"></span></div>
+      </div>
+    </div>
+
+    <div class="dash-grid-mid">
+      <div class="win">
+        <div class="win-titlebar">
+          <div class="win-dots"><div class="win-dot dot-r"></div><div class="win-dot dot-y"></div><div class="win-dot dot-g"></div></div>
+          <span class="win-label">Tasks</span>
+          <span class="win-badge b-green" id="tasks-badge">loading</span>
+        </div>
+        <div class="win-body" id="tasks-body"><div class="loading-msg">Loading tasks...</div></div>
+        <div class="win-footer"><button class="footer-btn" onclick="loadTasks()">Refresh</button><span class="footer-ts" id="tasks-ts"></span></div>
+      </div>
+      <div class="win">
+        <div class="win-titlebar">
+          <div class="win-dots"><div class="win-dot dot-r"></div><div class="win-dot dot-y"></div><div class="win-dot dot-g"></div></div>
+          <span class="win-label">Metabolic Coach</span>
+          <span class="win-badge b-purple">AI</span>
+        </div>
+        <div class="win-body">
+          <div class="meta-stats">
+            <div class="ms"><div class="ms-lbl">Glucose</div><div class="ms-val" id="m-glucose">—</div></div>
+            <div class="ms"><div class="ms-lbl">HRV</div><div class="ms-val" id="m-hrv">—</div></div>
+            <div class="ms"><div class="ms-lbl">Sleep</div><div class="ms-val" id="m-sleep">—</div></div>
+          </div>
+          <div class="coach-msgs" id="coach-msgs">
+            <div class="msg msg-ai">Hi! Share your metabolic data — glucose, HRV, sleep, weight — and I'll coach you through today.</div>
+          </div>
+          <div class="coach-row">
+            <input class="coach-in" id="coach-in" type="text" placeholder="Share a metric or ask..." onkeydown="if(event.key==='Enter')sendCoach()"/>
+            <button class="coach-send" onclick="sendCoach()">Ask</button>
+          </div>
+        </div>
+        <div class="win-footer"><button class="footer-btn" onclick="window.open('https://claude.ai','_blank')">Open Claude ↗</button><span class="footer-ts"></span></div>
+      </div>
+    </div>
+
+    <div class="dash-grid-bot">
+      <div class="win">
+        <div class="win-titlebar">
+          <div class="win-dots"><div class="win-dot dot-r"></div><div class="win-dot dot-y"></div><div class="win-dot dot-g"></div></div>
+          <span class="win-label">Weather — 10-day forecast</span>
+          <span class="win-badge b-teal" id="wx-badge">loading</span>
+        </div>
+        <div class="win-body" id="wx-body"><div class="loading-msg">Detecting location...</div></div>
+        <div class="win-footer"><button class="footer-btn" onclick="loadWeather()">Refresh</button><span class="footer-ts" id="wx-ts"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CLIENT_ID = '670108422827-psertd34dbuah6a8nrli4pqtegjb73cc.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/tasks';
+let gToken = null, taskListId = null;
+const coachHistory = [];
+
+document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-US', {weekday:'long',month:'short',day:'numeric'});
+
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function nowTs(){return new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
+function fmtTime(d){return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});}
+function durStr(s,e){const m=Math.round((new Date(e)-new Date(s))/60000);return m<60?m+'m':Math.floor(m/60)+'h'+(m%60?m%60+'m':'');}
+function isNow(s,e){const n=new Date();return new Date(s)<=n&&new Date(e)>=n;}
+function fmtEmailDate(d){try{const dt=new Date(d),now=new Date(),diff=now-dt;if(diff<3600000)return Math.round(diff/60000)+'m';if(diff<86400000)return Math.round(diff/3600000)+'h';return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});}catch{return '';}}
+
+function loadGis(){
+  return new Promise(res=>{
+    if(window.google&&window.google.accounts){res();return;}
+    const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=res;document.head.appendChild(s);
+  });
+}
+
+async function signIn(){
+  const btn=document.querySelector('.google-btn');
+  btn.textContent='Signing in...';btn.disabled=true;
+  await loadGis();
+  google.accounts.oauth2.initTokenClient({
+    client_id:CLIENT_ID, scope:SCOPES,
+    callback:async(r)=>{
+      if(r.error){btn.textContent='Sign in with Google';btn.disabled=false;alert('Sign-in failed: '+r.error);return;}
+      gToken=r.access_token;
+      document.getElementById('signin-screen').style.display='none';
+      document.getElementById('dashboard-screen').style.display='block';
+      document.getElementById('signout-btn').style.display='block';
+      loadAll();
+    }
+  }).requestAccessToken({prompt:'consent', login_hint:'jbryant@gardenerssupplyinc.com'});
+}
+
+function signOut(){
+  if(gToken&&window.google)google.accounts.oauth2.revoke(gToken);
+  gToken=null;taskListId=null;
+  document.getElementById('signin-screen').style.display='block';
+  document.getElementById('dashboard-screen').style.display='none';
+  document.getElementById('signout-btn').style.display='none';
+}
+
+async function gFetch(url){
+  const r=await fetch(url,{headers:{Authorization:'Bearer '+gToken}});
+  if(!r.ok)throw new Error('API error '+r.status);
+  return r.json();
+}
+async function gPost(url,body){
+  const r=await fetch(url,{method:'POST',headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error('API error '+r.status);
+  return r.json();
+}
+async function gPatch(url,body){
+  const r=await fetch(url,{method:'PATCH',headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error('API error '+r.status);
+  return r.json();
+}
+async function claudeAsk(prompt,max){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:max||400,messages:[{role:'user',content:prompt}]})});
+  const d=await r.json();
+  return d.content?.map(b=>b.text||'').join('')||'';
+}
+
+function loadAll(){loadEmails();loadCalendar();loadTasks();loadWeather();}
+
+async function loadEmails(){
+  document.getElementById('email-body').innerHTML='<div class="loading-msg">Fetching inbox...</div>';
+  document.getElementById('email-badge').textContent='...';
+  try{
+    const data=await gFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=15&q=is:unread+in:inbox');
+    if(!data.messages||!data.messages.length){document.getElementById('email-body').innerHTML='<div class="loading-msg">No unread emails.</div>';document.getElementById('email-badge').textContent='0';return;}
+    const details=await Promise.all(data.messages.slice(0,8).map(m=>gFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date')));
+    const emails=details.map(m=>{const gh=n=>m.payload.headers.find(h=>h.name.toLowerCase()===n.toLowerCase())?.value||'';return{from:gh('From').replace(/<.*>/,'').replace(/"/g,'').trim()||'Unknown',subject:gh('Subject')||'(no subject)',date:gh('Date'),snippet:m.snippet||''};});
+    document.getElementById('email-body').innerHTML='<div class="loading-msg">AI prioritizing...</div>';
+    let rows=emails.slice(0,5).map((e,i)=>({...e,priority:i<2?'high':'medium',reason:''}));
+    let summary='';
+    try{
+      const list=emails.map((e,i)=>i+': From: '+e.from+' | Subject: '+e.subject).join('\n');
+      const raw=await claudeAsk(`Prioritize these unread emails. Return ONLY raw JSON no markdown:\n{"emails":[{"index":0,"priority":"high|medium|low","reason":"3-5 word phrase"}],"summary":"one sentence what needs attention"}\n\nEmails:\n${list}`,500);
+      const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+      rows=parsed.emails.slice(0,5).map(p=>({...emails[p.index],priority:p.priority,reason:p.reason})).filter(Boolean);
+      summary=parsed.summary||'';
+    }catch(e){}
+    const highN=rows.filter(e=>e.priority==='high').length;
+    const badge=document.getElementById('email-badge');
+    badge.textContent=highN+' urgent';badge.className='win-badge '+(highN>0?'b-red':'b-green');
+    let html=rows.map(e=>`<div class="email-item"><div class="e-row1"><div class="pdot pd-${e.priority==='high'?'h':e.priority==='medium'?'m':'l'}"></div><div class="e-from">${esc(e.from)}</div><div class="e-time">${esc(fmtEmailDate(e.date))}</div></div><div class="e-subj">${esc(e.subject)}</div>${e.reason?'<div class="e-reason">'+esc(e.reason)+'</div>':''}</div>`).join('');
+    if(summary)html+=`<div class="ai-blurb"><div class="ai-lbl ai-lbl-blue">AI summary</div>${esc(summary)}</div>`;
+    document.getElementById('email-body').innerHTML=html;
+    document.getElementById('email-ts').textContent=nowTs();
+  }catch(e){document.getElementById('email-body').innerHTML='<div class="error-msg">'+esc(e.message)+'</div>';document.getElementById('email-badge').textContent='err';}
+}
+
+async function loadCalendar(){
+  document.getElementById('cal-body').innerHTML='<div class="loading-msg">Fetching calendar...</div>';
+  document.getElementById('cal-badge').textContent='...';
+  try{
+    const now=new Date();
+    const sod=new Date(now.getFullYear(),now.getMonth(),now.getDate()).toISOString();
+    const eod=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59).toISOString();
+    const data=await gFetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(sod)}&timeMax=${encodeURIComponent(eod)}&singleEvents=true&orderBy=startTime&maxResults=15`);
+    const events=(data.items||[]).filter(e=>e.status!=='cancelled');
+    document.getElementById('cal-badge').textContent=events.length+(events.length===1?' event':' events');
+    if(!events.length){document.getElementById('cal-body').innerHTML='<div class="loading-msg">No events today — free day!</div>';return;}
+    document.getElementById('cal-body').innerHTML='<div class="loading-msg">Generating briefing...</div>';
+    const BARS=['bar-blue','bar-amber','bar-purple','bar-green','bar-coral','bar-teal','bar-pink','bar-gray'];
+    const cmap={'1':'bar-blue','2':'bar-teal','3':'bar-gray','4':'bar-coral','5':'bar-amber','9':'bar-blue','10':'bar-green','11':'bar-coral'};
+    let summary='';
+    try{
+      const list=events.map(e=>{const s=e.start.dateTime?fmtTime(new Date(e.start.dateTime)):'All day';return s+' — '+e.summary;}).join('\n');
+      summary=await claudeAsk(`Today's schedule:\n${list}\n\nWrite ONE sentence (max 25 words) capturing what to expect from this day. Just the sentence, no quotes.`,120);
+    }catch(e){}
+    let ci=0;
+    let html=events.map(e=>{
+      const allDay=!e.start.dateTime;const s=allDay?null:new Date(e.start.dateTime);const en=allDay?null:new Date(e.end.dateTime);
+      const bar=e.colorId?(cmap[e.colorId]||'bar-blue'):BARS[ci++%BARS.length];
+      const happening=s&&en&&isNow(s,en);const timeStr=allDay?'All day':(fmtTime(s)+' – '+fmtTime(en));
+      const dd=s&&en?durStr(s,en):'';const loc=e.location?e.location.split(',')[0]:'';
+      return`<div class="cal-item"><div class="cal-tc"><span class="cal-time">${esc(timeStr)}</span>${dd?'<span class="cal-dur">'+esc(dd)+'</span>':''}</div><div class="cal-bar ${bar}"></div><div class="cal-info"><div class="cal-ttl">${esc(e.summary||'No title')}${happening?'<span class="now-pill">now</span>':''}</div>${loc?'<div class="cal-det">'+esc(loc)+'</div>':''}</div></div>`;
+    }).join('');
+    if(summary)html+=`<div class="ai-blurb"><div class="ai-lbl ai-lbl-amber">Day briefing</div>${esc(summary)}</div>`;
+    document.getElementById('cal-body').innerHTML=html;
+    document.getElementById('cal-ts').textContent=nowTs();
+  }catch(e){document.getElementById('cal-body').innerHTML='<div class="error-msg">'+esc(e.message)+'</div>';document.getElementById('cal-badge').textContent='err';}
+}
+
+async function loadTasks(){
+  document.getElementById('tasks-body').innerHTML='<div class="loading-msg">Fetching tasks...</div>';
+  document.getElementById('tasks-badge').textContent='...';
+  try{
+    const listsData=await gFetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists?maxResults=10');
+    const lists=listsData.items||[];
+    if(!lists.length){document.getElementById('tasks-body').innerHTML='<div class="loading-msg">No task lists found.</div>';return;}
+    taskListId=lists[0].id;
+    const tasksData=await gFetch(`https://tasks.googleapis.com/tasks/v1/lists/${taskListId}/tasks?showCompleted=false&showHidden=false&maxResults=20`);
+    const items=(tasksData.items||[]).filter(t=>t.status!=='completed');
+    document.getElementById('tasks-badge').textContent=items.length+' left';
+    renderTasksUI(items);
+    document.getElementById('tasks-ts').textContent=nowTs();
+  }catch(e){document.getElementById('tasks-body').innerHTML='<div class="error-msg">'+esc(e.message)+'<br>Enable the Google Tasks API in your Cloud project.</div>';document.getElementById('tasks-badge').textContent='err';}
+}
+
+function renderTasksUI(items){
+  const numCls=['tn-1','tn-2','tn-3'];const top=items.slice(0,3);
+  let html=top.length?top.map((t,i)=>{
+    const dueStr=t.due?new Date(t.due).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+    return`<div class="task-item"><input type="checkbox" class="task-check" onchange="completeTask('${esc(t.id)}',this)"><div class="task-num ${numCls[i]}">${i+1}</div><div><div class="task-text">${esc(t.title)}</div>${dueStr?'<div class="task-due">Due '+esc(dueStr)+'</div>':''}</div></div>`;
+  }).join(''):'<div class="loading-msg" style="padding:6px 0">All tasks done!</div>';
+  html+=`<div class="task-input-row"><input class="task-input" id="task-in" type="text" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addTask()"/><button class="task-add-btn" onclick="addTask()">Add</button></div>`;
+  document.getElementById('tasks-body').innerHTML=html;
+}
+
+async function completeTask(taskId,checkbox){
+  try{await gPatch(`https://tasks.googleapis.com/tasks/v1/lists/${taskListId}/tasks/${taskId}`,{status:'completed'});setTimeout(()=>loadTasks(),600);}
+  catch(e){checkbox.checked=false;alert('Could not complete task: '+e.message);}
+}
+async function addTask(){
+  const inp=document.getElementById('task-in');const title=inp.value.trim();
+  if(!title||!taskListId)return;inp.value='';inp.disabled=true;
+  try{await gPost(`https://tasks.googleapis.com/tasks/v1/lists/${taskListId}/tasks`,{title,status:'needsAction'});await loadTasks();}
+  catch(e){inp.disabled=false;alert('Could not add task: '+e.message);}
+  inp.disabled=false;
+}
+
+function wxIcon(code){
+  if(code===0)return'☀️';if(code<=2)return'⛅';if(code===3)return'☁️';
+  if(code<=45)return'🌫️';if(code<=57)return'🌦️';if(code<=67)return'🌧️';
+  if(code<=77)return'🌨️';if(code<=82)return'🌦️';if(code<=86)return'🌨️';return'⛈️';
+}
+function wxDesc(code){
+  if(code===0)return'Clear sky';if(code<=2)return'Partly cloudy';if(code===3)return'Overcast';
+  if(code<=45)return'Foggy';if(code<=57)return'Drizzle';if(code<=67)return'Rain';
+  if(code<=77)return'Snow';if(code<=82)return'Rain showers';if(code<=86)return'Snow showers';return'Thunderstorm';
+}
+function isRainCode(code){return(code>=51&&code<=82)||(code>=95&&code<=99);}
+
+async function loadWeather(){
+  document.getElementById('wx-body').innerHTML='<div class="loading-msg">Detecting location...</div>';
+  document.getElementById('wx-badge').textContent='...';
+  try{
+    const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:8000}));
+    const {latitude:lat,longitude:lon}=pos.coords;
+    document.getElementById('wx-body').innerHTML='<div class="loading-msg">Fetching forecast...</div>';
+    const wx=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,windspeed_10m,relative_humidity_2m,apparent_temperature&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=10`).then(r=>r.json());
+    let cityName='Your location';
+    try{const geo=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,{headers:{'User-Agent':'personal-dashboard'}}).then(r=>r.json());cityName=geo.address?.city||geo.address?.town||geo.address?.county||'Your location';}catch(e){}
+    const cur=wx.current;const daily=wx.daily;
+    const curTemp=Math.round(cur.temperature_2m);const feelsLike=Math.round(cur.apparent_temperature);
+    const rainDays=[];
+    for(let i=0;i<daily.time.length;i++){
+      const pop=daily.precipitation_probability_max[i]||0;const precip=daily.precipitation_sum[i]||0;
+      if(pop>=40||precip>0.1){const d=new Date(daily.time[i]);const label=i===0?'Today':i===1?'Tomorrow':d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});rainDays.push({label,pop,precip:precip.toFixed(2),heavy:pop>=70||(precip>=0.5)});}
+    }
+    const badge=document.getElementById('wx-badge');
+    if(rainDays.length>0){badge.textContent=rainDays.length+' rain day'+(rainDays.length>1?'s':'');badge.className='win-badge b-blue';}
+    else{badge.textContent='Clear 10 days';badge.className='win-badge b-green';}
+    let html=`<div class="wx-hero"><div><div class="wx-temp">${curTemp}°F</div><div class="wx-desc">${esc(wxDesc(cur.weathercode))}</div><div class="wx-loc">${esc(cityName)} · Feels like ${feelsLike}°</div></div><div style="text-align:right"><div class="wx-icon">${wxIcon(cur.weathercode)}</div><div class="wx-meta">Wind ${Math.round(cur.windspeed_10m)} mph<br>Humidity ${Math.round(cur.relative_humidity_2m)}%</div></div></div>`;
+    if(rainDays.length>0){const alerts=rainDays.map(r=>`<strong>${esc(r.label)}</strong> — ${r.pop}% chance${r.precip>0?' · '+r.precip+'"':''}`).join(' &nbsp;&middot;&nbsp; ');html+=`<div class="wx-rain-alert"><div style="font-size:16px;flex-shrink:0;margin-top:1px">🌧️</div><div class="wx-rain-text"><strong>Rain ahead:</strong> ${alerts}</div></div>`;}
+    const maxPop=Math.max(...daily.precipitation_probability_max.slice(0,10),1);
+    html+=`<div class="wx-forecast">`;
+    for(let i=0;i<10;i++){
+      const d=new Date(daily.time[i]);const dayName=i===0?'Today':d.toLocaleDateString('en-US',{weekday:'short'});
+      const hi=Math.round(daily.temperature_2m_max[i]);const lo=Math.round(daily.temperature_2m_min[i]);
+      const pop=Math.round(daily.precipitation_probability_max[i]||0);const code=daily.weathercode[i];
+      const isRain=isRainCode(code);const isHeavy=pop>=70||(daily.precipitation_sum[i]||0)>=0.5;
+      const barW=Math.round((pop/maxPop)*100);
+      html+=`<div class="wx-day ${isHeavy?'heavy-rain':isRain?'rain-day':''}"><div class="wx-day-name">${esc(dayName)}</div><div class="wx-day-icon">${wxIcon(code)}</div><div class="wx-day-hi">${hi}°</div><div class="wx-day-lo">${lo}°</div>${pop>0?`<div class="wx-day-rain ${isHeavy?'heavy':''}">${pop}%</div><div class="wx-bar-wrap"><div class="wx-bar" style="width:${barW}%;background:${isHeavy?'#E24B4A':'#378ADD'}"></div></div>`:'<div style="height:18px"></div>'}</div>`;
+    }
+    html+=`</div>`;
+    document.getElementById('wx-body').innerHTML=html;
+    document.getElementById('wx-ts').textContent=nowTs();
+  }catch(e){document.getElementById('wx-body').innerHTML='<div class="error-msg">'+(e.code===1?'Location access denied — please allow location and refresh.':esc(e.message))+'</div>';document.getElementById('wx-badge').textContent='err';}
+}
+
+const COACH_SYS=`You are a metabolic health coach in a compact dashboard widget. When given metrics (glucose, HRV, sleep, weight), give a specific 2-3 sentence interpretation and one actionable tip for TODAY. Be warm, direct, practical. Reference the actual numbers. Keep responses under 60 words.`;
+function parseMetrics(text){
+  const g=text.match(/glucose[:\s]+(\d+)/i)||text.match(/(\d+)\s*mg\/dl/i);
+  const h=text.match(/hrv[:\s]+(\d+)/i);const s=text.match(/sleep[:\s]+(\d+\.?\d*)/i);
+  if(g)document.getElementById('m-glucose').textContent=g[1]+' mg/dL';
+  if(h)document.getElementById('m-hrv').textContent=h[1]+' ms';
+  if(s)document.getElementById('m-sleep').textContent=s[1];
+}
+function addCoachMsg(text,role){
+  const el=document.createElement('div');el.className='msg '+(role==='ai'?'msg-ai':'msg-user');el.textContent=text;
+  const box=document.getElementById('coach-msgs');box.appendChild(el);box.scrollTop=box.scrollHeight;return el;
+}
+async function sendCoach(){
+  const inp=document.getElementById('coach-in');const text=inp.value.trim();if(!text)return;
+  inp.value='';addCoachMsg(text,'user');parseMetrics(text);coachHistory.push({role:'user',content:text});
+  const loadEl=document.createElement('div');loadEl.className='msg-loading';loadEl.textContent='Thinking...';document.getElementById('coach-msgs').appendChild(loadEl);
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,system:COACH_SYS,messages:coachHistory})});
+    const d=await r.json();const reply=d.content?.map(b=>b.text||'').join('')||'Could not get response.';
+    loadEl.remove();addCoachMsg(reply,'ai');coachHistory.push({role:'assistant',content:reply});
+  }catch(e){loadEl.remove();addCoachMsg('Connection error — try again.','ai');}
+}
+</script>
+</body>
+</html>
